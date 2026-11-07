@@ -383,6 +383,80 @@ test("importa um backup de 50 funcionários e valida a escala após recarregar",
   );
   await page.reload();
   await page.getByLabel("Mês da escala").fill("2026-11");
+
+  const date = "2026-11-04";
+  const calendar = page.getByRole("region", { name: "Calendário mensal" });
+  const week = calendar.locator('[data-schedule-week="2026-11-02"]');
+  const dayButton = week.locator('time[datetime="' + date + '"]').locator("..");
+  const roster = data.people.filter(
+    (person) => data.assignments[date][person.id],
+  );
+  const hidden = roster.filter(
+    (person) => Number(person.id.slice(1)) >= 4,
+  ).length;
+  const hiddenPerson = roster.at(-1)!;
+  const rosterLabel = hiddenPerson.name + " em " + date;
+  await expect(week.locator("time")).toHaveCount(7);
+  await expect(
+    week.getByTitle("Pessoa 3 · Manhã", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    week.getByTitle("Pessoa 4 · Manhã", { exact: true }),
+  ).toHaveCount(0);
+  expect((await week.boundingBox())!.height).toBeLessThan(240);
+  await expect(
+    dayButton.getByText("+" + hidden, { exact: true }),
+  ).toBeVisible();
+
+  await dayButton.press("Enter");
+  const dialog = page.getByRole("dialog");
+  await expect(
+    dialog.getByRole("heading", { name: /4 de novembro de 2026/i }),
+  ).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: /Manhã/ })).toBeVisible();
+  await expect(dialog.getByRole("combobox")).toHaveCount(roster.length);
+  const hiddenSelect = dialog.getByRole("combobox", { name: rosterLabel });
+  await hiddenSelect.scrollIntoViewIfNeeded();
+  await expect(dialog.getByRole("button", { name: "Fechar" })).toBeInViewport();
+  await hiddenSelect.selectOption("");
+  await expect(dialog.getByRole("combobox")).toHaveCount(roster.length - 1);
+  await dialog.getByText(/^Folgas/).click();
+  await expect(hiddenSelect).toHaveValue("");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(dayButton).toBeFocused();
+  await expect(
+    dayButton.getByText("+" + (hidden - 1), { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Descartar revisão" }).click();
+  await expect(
+    dayButton.getByText("+" + hidden, { exact: true }),
+  ).toBeVisible();
+
+  await page.setViewportSize({ width: 320, height: 740 });
+  await expect(
+    week.getByTitle("Pessoa 3 · Manhã", { exact: true }).first(),
+  ).toBeHidden();
+  await expect(
+    dayButton.getByText(String(roster.length), { exact: true }),
+  ).toBeVisible();
+  expect(
+    await calendar.evaluate(
+      (element) => element.scrollWidth <= element.clientWidth,
+    ),
+  ).toBe(true);
+  expect(
+    await week.locator("time").evaluateAll((dates) =>
+      dates.every((item) => {
+        const bounds = item.getBoundingClientRect();
+        return bounds.left >= 0 && bounds.right <= innerWidth;
+      }),
+    ),
+  ).toBe(true);
+  await dayButton.click();
+  await expect(dialog.getByRole("combobox")).toHaveCount(roster.length);
+  await dialog.getByRole("button", { name: "Fechar" }).click();
+  await expect(dayButton).toBeFocused();
   await page.getByRole("button", { name: "Validar escala" }).click();
   await expect(
     page.getByText(

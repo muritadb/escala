@@ -26,6 +26,7 @@ export function AssignmentSelect({
   return (
     <select
       aria-label={person.name + " em " + day}
+      data-person-id={person.id}
       disabled={busy}
       value={value}
       onChange={(event) => onEdit(day, person.id, event.target.value)}

@@ -5,7 +5,7 @@ import { weekdayDefaults } from "@compasso/domain";
 import { api } from "../../infrastructure/api";
 import { button, primary, personColor } from "../../components/styles";
 import { Notice } from "../../components/Notice";
-import { ScheduleCalendar } from "./ScheduleCalendar";
+import { ScheduleCalendar, WEEK_LANE_LIMIT } from "./ScheduleCalendar";
 import { WeeklySummary } from "./WeeklySummary";
 import { useScheduleGenerator } from "./useScheduleGenerator";
 export function SchedulePage() {
@@ -193,19 +193,32 @@ export function SchedulePage() {
       ) : (
         <>
           <div className="mb-4 flex flex-wrap gap-6 text-xs">
-            {data.people.map(
-              (person, index) =>
-                person.active && (
-                  <span key={person.id} className="flex items-center gap-2">
-                    <i
-                      className="size-3 rounded border border-ink/25"
-                      style={{ backgroundColor: personColor(index) }}
-                    />
-                    {person.name}
-                  </span>
-                ),
+            {people.length <= WEEK_LANE_LIMIT &&
+              data.people.map(
+                (person, index) =>
+                  person.active && (
+                    <span
+                      key={person.id}
+                      className="hidden items-center gap-2 md:flex"
+                    >
+                      <i
+                        className="size-3 rounded border border-ink/25"
+                        style={{ backgroundColor: personColor(index) }}
+                      />
+                      {person.name}
+                    </span>
+                  ),
+              )}
+            <span className="md:hidden">
+              Os números abaixo das datas indicam quantas pessoas estão
+              escaladas.
+            </span>
+            {people.length > WEEK_LANE_LIMIT && (
+              <span className="hidden md:inline">
+                Até quatro faixas por semana. Abra a data para ver a equipe
+                completa.
+              </span>
             )}
-            <span>Dias sem faixa indicam folga.</span>
             <span>Datas com dia e mês completam a semana.</span>
           </div>
           <ScheduleCalendar
