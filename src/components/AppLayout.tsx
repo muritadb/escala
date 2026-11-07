@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { useApp } from "../app/AppContext";
 import type { Tab } from "../domain/types";
 import { downloadBackup, readBackup } from "../infrastructure/backup";
@@ -41,10 +41,27 @@ const pages: {
     description: "Escolha os dias de funcionamento e a cobertura mínima.",
   },
 ];
+const compactSidebarQuery = "(768px <= width < 1280px)";
+
+function subscribeToSidebarSize(onChange: () => void) {
+  const media = window.matchMedia?.(compactSidebarQuery);
+  media?.addEventListener("change", onChange);
+  return () => media?.removeEventListener("change", onChange);
+}
+
+function isCompactSidebarSize() {
+  return window.matchMedia?.(compactSidebarQuery).matches ?? false;
+}
+
 export function AppLayout({ children }: { children: ReactNode }) {
   const { state, dispatch, confirm, busy } = useApp(),
     page = pages.find((p) => p.id === state.tab)!;
-  const [collapsed, setCollapsed] = useState(false);
+  const compactByDefault = useSyncExternalStore(
+    subscribeToSidebarSize,
+    isCompactSidebarSize,
+  );
+  const [sidebarOverride, setSidebarOverride] = useState<boolean | null>(null);
+  const collapsed = sidebarOverride ?? compactByDefault;
   const compactText = collapsed ? "md:sr-only" : "";
   const toggleLabel = collapsed
     ? "Expandir barra lateral"
@@ -84,7 +101,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             aria-expanded={!collapsed}
             aria-label={toggleLabel}
             title={toggleLabel}
-            onClick={() => setCollapsed((current) => !current)}
+            onClick={() => setSidebarOverride(!collapsed)}
             className={
               "hidden size-8 shrink-0 place-items-center rounded-md text-blue-100 hover:bg-[#31536c] focus-visible:outline-blue-200 md:grid " +
               (collapsed ? "" : "self-end")

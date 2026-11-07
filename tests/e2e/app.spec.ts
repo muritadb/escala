@@ -263,7 +263,7 @@ test("inclui a pessoa recém-cadastrada na segunda de uma escala salva", async (
 test("recolhe a barra no desktop e libera espaço para o calendário", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.setViewportSize({ width: 1024, height: 912 });
   await page.addInitScript(
     (data) => localStorage.setItem("compasso-v1", JSON.stringify(data)),
     fixture(),
@@ -271,6 +271,10 @@ test("recolhe a barra no desktop e libera espaço para o calendário", async ({
   await page.goto("/");
   const main = page.getByRole("main");
   const toggle = page.locator('[aria-controls="sidebar-navigation"]');
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(main).toHaveCSS("margin-left", "72px");
+
+  await page.setViewportSize({ width: 1280, height: 800 });
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(main).toHaveCSS("margin-left", "230px");
 
@@ -288,6 +292,12 @@ test("recolhe a barra no desktop e libera espaço para o calendário", async ({
   await expect(
     page.getByRole("heading", { name: "Quem faz acontecer." }),
   ).toBeVisible();
+  await toggle.click();
+  await expect(main).toHaveCSS("margin-left", "230px");
+
+  await page.setViewportSize({ width: 1024, height: 912 });
+  await page.reload();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await toggle.click();
   await expect(main).toHaveCSS("margin-left", "230px");
 
