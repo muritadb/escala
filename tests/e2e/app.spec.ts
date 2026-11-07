@@ -259,3 +259,39 @@ test("inclui a pessoa recém-cadastrada na segunda de uma escala salva", async (
   );
   expect(saved.assignments).toEqual(data.assignments);
 });
+
+test("recolhe a barra no desktop e libera espaço para o calendário", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.addInitScript(
+    (data) => localStorage.setItem("compasso-v1", JSON.stringify(data)),
+    fixture(),
+  );
+  await page.goto("/");
+  const main = page.getByRole("main");
+  const toggle = page.locator('[aria-controls="sidebar-navigation"]');
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(main).toHaveCSS("margin-left", "230px");
+
+  await toggle.press("Enter");
+  await expect(toggle).toBeFocused();
+  await expect(toggle).toHaveAccessibleName("Expandir barra lateral");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(main).toHaveCSS("margin-left", "72px");
+  await expect(
+    page.getByRole("button", { name: "Exportar backup" }),
+  ).toBeVisible();
+  await page.screenshot({ path: "test-results/barra-recolhida.png" });
+
+  await page.getByRole("button", { name: "Pessoas", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Quem faz acontecer." }),
+  ).toBeVisible();
+  await toggle.click();
+  await expect(main).toHaveCSS("margin-left", "230px");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(toggle).toBeHidden();
+  await expect(main).toHaveCSS("margin-left", "0px");
+});
