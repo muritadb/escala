@@ -2,7 +2,7 @@ import { useApp } from "../../app/AppContext";
 import { range } from "../../domain/dates";
 import { validate } from "../../domain/validation";
 import { button, primary, shiftColor } from "../../components/styles";
-import { ScheduleGrid } from "./ScheduleGrid";
+import { ScheduleCalendar } from "./ScheduleCalendar";
 import { WeeklySummary } from "./WeeklySummary";
 import { useScheduleGenerator } from "./useScheduleGenerator";
 export function SchedulePage() {
@@ -143,10 +143,12 @@ export function SchedulePage() {
                 {t.name}
               </span>
             ))}
-            <span>○ Folga</span>
+            <span>Dias sem faixa indicam folga.</span>
           </div>
-          <ScheduleGrid
+          <ScheduleCalendar
             {...grid}
+            key={month}
+            month={month}
             days={days.filter((day) => day.startsWith(month))}
           />
           <WeeklySummary {...grid} month={month} />

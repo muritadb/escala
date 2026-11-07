@@ -32,7 +32,6 @@ export function WeeklySummary(props: GridProps & { month: string }) {
         ))}
       <ScheduleGrid
         {...props}
-        complementary
         days={props.days.filter((day) => !day.startsWith(props.month))}
       />
     </details>

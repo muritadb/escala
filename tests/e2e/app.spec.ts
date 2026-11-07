@@ -13,7 +13,7 @@ test("produção: dados legados, quatro telas, cores e geração no worker", asy
   await page.getByLabel("Mês da escala").fill("2026-11");
   await page.getByRole("button", { name: "Gerar escala", exact: true }).click();
   await expect(page.getByText("Escala em revisão")).toBeVisible();
-  await expect(page.locator("select.bg-shift-blue").first()).toHaveCSS(
+  await expect(page.locator(".bg-shift-blue[title]").first()).toHaveCSS(
     "background-color",
     "rgb(210, 232, 253)",
   );
@@ -21,6 +21,7 @@ test("produção: dados legados, quatro telas, cores e geração no worker", asy
   await expect(page.getByText("Escala salva.", { exact: true })).toBeVisible();
   const saved = await page.evaluate(() => localStorage.getItem("compasso-v1"));
   await page.reload();
+  await page.getByLabel("Mês da escala").fill("2026-11");
   expect(await page.evaluate(() => localStorage.getItem("compasso-v1"))).toBe(
     saved,
   );
@@ -28,6 +29,14 @@ test("produção: dados legados, quatro telas, cores e geração no worker", asy
     path: "test-results/escala-desktop.png",
     fullPage: true,
   });
+  const day = page.getByRole("button", { name: /^Editar / }).first();
+  await day.click();
+  const editor = page.getByRole("dialog");
+  await editor.getByRole("combobox").first().selectOption("a");
+  await editor.getByRole("button", { name: "Fechar" }).click();
+  await expect(day).toBeFocused();
+  await expect(page.getByText("Escala em revisão")).toBeVisible();
+  await page.getByRole("button", { name: "Descartar revisão" }).click();
   for (const [name, title] of [
     ["Pessoas", "Quem faz acontecer."],
     ["Turnos", "O ritmo da operação."],

@@ -30,6 +30,19 @@ beforeEach(() => {
   vi.stubGlobal("Worker", FakeWorker);
 });
 const saved = () => JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+async function openFirstDay(user: ReturnType<typeof userEvent.setup>) {
+  const editor = screen.getByRole<HTMLDialogElement>("dialog", {
+    hidden: true,
+  });
+  // jsdom exposes the open attribute but does not implement showModal.
+  Object.defineProperty(editor, "showModal", {
+    value: () => {
+      editor.open = true;
+    },
+  });
+  await user.click(screen.getAllByRole("button", { name: /^Editar / })[0]);
+  return within(screen.getByRole("dialog")).getAllByRole("combobox")[0];
+}
 test("cadastra turno e pessoa usando a interface", async () => {
   const user = userEvent.setup();
   render(<App />);
@@ -96,18 +109,15 @@ test("aceitar revisão válida persiste e recupera a escala ao recarregar", asyn
   render(<App />);
   expect(saved()).toEqual(before);
   expect(screen.queryByText("Escala em revisão")).not.toBeInTheDocument();
-  expect(
-    screen
-      .getAllByRole("combobox")
-      .some((select) => (select as HTMLSelectElement).value === "a"),
-  ).toBe(true);
+  expect(screen.getAllByTitle(/ · Manhã$/).length).toBeGreaterThan(0);
 });
 test("ajuste manual inválido permanece somente na revisão", async () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(fixture()));
   const user = userEvent.setup();
   render(<App />);
-  const cell = screen.getAllByRole("combobox")[0];
+  const cell = await openFirstDay(user);
   await user.selectOptions(cell, "a");
+  screen.getByRole<HTMLDialogElement>("dialog").open = false;
   expect(screen.getByText("Escala em revisão")).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Validar e salvar" }));
   expect(screen.getByText("Escala em revisão")).toBeInTheDocument();
@@ -117,7 +127,8 @@ test("navegação pede confirmação para descartar revisão", async () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(fixture()));
   const user = userEvent.setup();
   render(<App />);
-  await user.selectOptions(screen.getAllByRole("combobox")[0], "a");
+  await user.selectOptions(await openFirstDay(user), "a");
+  screen.getByRole<HTMLDialogElement>("dialog").open = false;
   await user.click(screen.getByRole("button", { name: "Turnos" }));
   await user.click(
     within(screen.getByRole("dialog")).getByRole("button", {
