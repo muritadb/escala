@@ -14,6 +14,15 @@ test("produção: dados legados, quatro telas, cores e geração no worker", asy
   await page.getByLabel("Mês da escala").fill("2026-11");
   const initial = page.getByRole("button", { name: "Revisar escala inicial" });
   await expect(initial).toBeVisible();
+  const calendar = page.getByRole("region", { name: "Calendário mensal" });
+  await expect(calendar.locator("abbr").first()).toHaveText("Seg");
+  await expect(calendar.locator("abbr").last()).toHaveText("Dom");
+  const firstWeek = calendar.locator("[data-schedule-week]").first();
+  await expect(firstWeek.locator("time").first()).toHaveText("26/10");
+  await expect(firstWeek.locator("time").last()).toHaveText("01");
+  await expect(
+    firstWeek.getByRole("button", { name: "Remover Pessoa 0 de 26/10" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Remover Pessoa 0 de 02/11" }),
   ).toBeVisible();
@@ -58,7 +67,8 @@ test("produção: dados legados, quatro telas, cores e geração no worker", asy
   const day = page.getByRole("button", { name: /^Editar / }).first();
   await day.click();
   const editor = page.getByRole("dialog");
-  await editor.getByRole("combobox").first().selectOption("a");
+  const assignment = editor.getByRole("combobox").first();
+  await assignment.selectOption((await assignment.inputValue()) ? "" : "a");
   await editor.getByRole("button", { name: "Fechar" }).click();
   await expect(day).toBeFocused();
   await expect(page.getByText("Escala em revisão")).toBeVisible();
@@ -200,4 +210,13 @@ test("ajusta faixas entre semanas, preserva outro turno e remove um dia isolado"
     JSON.parse(localStorage.getItem("compasso-v1")!),
   );
   expect(saved.assignments).toEqual(data.assignments);
+  await page
+    .getByRole("button", { name: "Validar escala", exact: true })
+    .click();
+  await page.getByText(/Pendências na validação/).click();
+  await expect(
+    page.getByText(
+      "Pessoa 0: 4 de 5 dias trabalhados na semana de 02/11 a 08/11",
+    ),
+  ).toBeVisible();
 });

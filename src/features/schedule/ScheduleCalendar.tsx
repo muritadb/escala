@@ -1,6 +1,6 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { button, personColor } from "../../components/styles";
-import { add, date, dow, weekdays } from "../../domain/dates";
+import { add, date, label, weekdays } from "../../domain/dates";
 import { need } from "../../domain/rules";
 import { AssignmentSelect, type GridProps } from "./ScheduleGrid";
 
@@ -11,7 +11,6 @@ import {
   type ResizeRange,
 } from "./scheduleResize";
 
-const calendarWeekdays = [weekdays[6], ...weekdays.slice(0, 6)];
 const monthLabel = new Intl.DateTimeFormat("pt-BR", {
   month: "long",
   year: "numeric",
@@ -40,8 +39,7 @@ export function ScheduleCalendar({
   const people = data.people.filter((person) => person.active);
   const [selectedDay, setSelectedDay] = useState(days[0]);
   const editor = useRef<HTMLDialogElement>(null);
-  const leading = (dow(days[0]) + 1) % 7;
-  const weekCount = Math.ceil((leading + days.length) / 7);
+  const weekCount = days.length / 7;
   const coverage = new Map(
     days.map((day) => [
       day,
@@ -76,12 +74,7 @@ export function ScheduleCalendar({
         Math.floor(((event.clientX - bounds.left) / bounds.width) * 7),
       ),
     );
-    const day = add(week.dataset.scheduleWeek!, column);
-    return day < days[0]
-      ? 0
-      : day > days[days.length - 1]
-        ? days.length - 1
-        : days.indexOf(day);
+    return days.indexOf(add(week.dataset.scheduleWeek!, column));
   }
 
   function clearDrag(pointerId: number) {
@@ -138,7 +131,7 @@ export function ScheduleCalendar({
         <div>
           <h2 className="text-xl font-semibold">Calendário de turnos</h2>
           <p className="text-[#c4e7eb] first-letter:uppercase">
-            {monthLabel.format(date(days[0]))}
+            {monthLabel.format(date(month + "-01"))}
           </p>
         </div>
         <p className="text-sm text-[#d6eef0]">
@@ -179,7 +172,7 @@ export function ScheduleCalendar({
       >
         <div className="min-w-[39rem] border-t border-l border-[#a9cbd1]">
           <div className="grid grid-cols-7">
-            {calendarWeekdays.map((weekday) => (
+            {weekdays.map((weekday) => (
               <div
                 key={weekday}
                 className="border-r border-b border-[#a9cbd1] px-1 py-3 text-center text-xs font-bold uppercase tracking-wide"
@@ -191,17 +184,13 @@ export function ScheduleCalendar({
             ))}
           </div>
           {Array.from({ length: weekCount }, (_, weekIndex) => {
-            const week = Array.from({ length: 7 }, (_, column) =>
-              add(month + "-01", weekIndex * 7 + column - leading),
-            );
+            const week = days.slice(weekIndex * 7, (weekIndex + 1) * 7);
             const lanes = people.flatMap((person) => {
               const bars = [];
               let start = 0;
               while (start < week.length) {
                 const day = week[start];
-                const shiftId = day.startsWith(month)
-                  ? assignments[day]?.[person.id]
-                  : undefined;
+                const shiftId = assignments[day]?.[person.id];
                 const shiftIndex = data.shifts.findIndex(
                   (shift) => shift.id === shiftId,
                 );
@@ -212,7 +201,6 @@ export function ScheduleCalendar({
                 let end = start + 1;
                 while (
                   end < week.length &&
-                  week[end].startsWith(month) &&
                   assignments[week[end]]?.[person.id] === shiftId
                 ) {
                   end++;
@@ -247,40 +235,41 @@ export function ScheduleCalendar({
                         }
                         style={{ left: (column * 100) / 7 + "%" }}
                       />
-                      {inMonth && (
-                        <button
-                          type="button"
-                          className="relative m-1.5 flex items-center justify-between gap-1 rounded-sm px-1.5 py-1 text-left text-sm font-bold hover:bg-[#cfeaed]"
-                          style={{ gridColumn: column + 1, gridRow: 1 }}
-                          aria-label={
-                            "Editar " +
-                            dayLabel.format(date(day)) +
-                            (ok
-                              ? ", cobertura atendida"
-                              : ", cobertura insuficiente")
-                          }
-                          disabled={busy}
-                          onClick={() => {
-                            setSelectedDay(day);
-                            editor.current?.showModal();
-                          }}
+                      <button
+                        type="button"
+                        className="relative m-1.5 flex items-center justify-between gap-1 rounded-sm px-1.5 py-1 text-left text-sm font-bold hover:bg-[#cfeaed]"
+                        style={{ gridColumn: column + 1, gridRow: 1 }}
+                        aria-label={
+                          "Editar " +
+                          dayLabel.format(date(day)) +
+                          (ok
+                            ? ", cobertura atendida"
+                            : ", cobertura insuficiente")
+                        }
+                        disabled={busy}
+                        onClick={() => {
+                          setSelectedDay(day);
+                          editor.current?.showModal();
+                        }}
+                      >
+                        <time
+                          dateTime={day}
+                          className={inMonth ? "" : "text-muted"}
                         >
-                          <time dateTime={day}>{day.slice(8)}</time>
-                          <span
-                            aria-hidden="true"
-                            className={
-                              ok ? "text-emerald-800" : "text-orange-800"
-                            }
-                            title={
-                              ok
-                                ? "Cobertura atendida"
-                                : "Cobertura insuficiente"
-                            }
-                          >
-                            {ok ? "✓" : "!"}
-                          </span>
-                        </button>
-                      )}
+                          {inMonth ? day.slice(8) : label(day)}
+                        </time>
+                        <span
+                          aria-hidden="true"
+                          className={
+                            ok ? "text-emerald-800" : "text-orange-800"
+                          }
+                          title={
+                            ok ? "Cobertura atendida" : "Cobertura insuficiente"
+                          }
+                        >
+                          {ok ? "✓" : "!"}
+                        </span>
+                      </button>
                     </div>
                   );
                 })}
@@ -302,11 +291,11 @@ export function ScheduleCalendar({
                         row={lane + 2}
                         busy={busy}
                         continuesBefore={
-                          previous.startsWith(month) &&
+                          previous >= days[0] &&
                           assignments[previous]?.[person.id] === shift.id
                         }
                         continuesAfter={
-                          next.startsWith(month) &&
+                          next <= days[days.length - 1] &&
                           assignments[next]?.[person.id] === shift.id
                         }
                         onRemove={(day) => onEdit(day, person.id, "")}

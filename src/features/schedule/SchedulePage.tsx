@@ -201,13 +201,13 @@ export function SchedulePage() {
                 ),
             )}
             <span>Dias sem faixa indicam folga.</span>
+            <span>Datas com dia e mês completam a semana.</span>
           </div>
           <ScheduleCalendar
             {...grid}
             key={month}
             month={month}
             onEditDays={editDays}
-            days={days.filter((day) => day.startsWith(month))}
           />
           <WeeklySummary {...grid} month={month} />
         </>

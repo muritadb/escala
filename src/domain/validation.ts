@@ -1,5 +1,5 @@
 import type { AppData, Assignments } from "./types";
-import { range, add, dow } from "./dates";
+import { range, add, dow, label } from "./dates";
 import { allowed, overlap, need } from "./rules";
 export function validate(
   s: AppData,
@@ -13,7 +13,15 @@ export function validate(
     for (let i = 0; i < days.length; i += 7) {
       const n = days.slice(i, i + 7).filter((d) => a[d]?.[p.id]).length;
       if (n !== 5)
-        errors.push(p.name + ": " + n + "/5 dias na semana de " + days[i]);
+        errors.push(
+          p.name +
+            ": " +
+            n +
+            " de 5 dias trabalhados na semana de " +
+            label(days[i]) +
+            " a " +
+            label(days[i + 6]),
+        );
     }
     for (const d of days) {
       const t = a[d]?.[p.id];
