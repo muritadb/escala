@@ -220,3 +220,42 @@ test("ajusta faixas entre semanas, preserva outro turno e remove um dia isolado"
     ),
   ).toBeVisible();
 });
+
+test("inclui a pessoa recém-cadastrada na segunda de uma escala salva", async ({
+  page,
+}) => {
+  const data = fixture(1);
+  data.assignments = Object.fromEntries(
+    range("2026-11").map((day) => [
+      day,
+      { p0: day === "2026-11-03" ? "a" : "" },
+    ]),
+  );
+  await page.addInitScript(
+    (data) => localStorage.setItem("compasso-v1", JSON.stringify(data)),
+    data,
+  );
+  await page.goto("/");
+  await page.getByRole("button", { name: "Pessoas", exact: true }).click();
+  await page.getByLabel("Nome da pessoa").fill("Bruna");
+  await page.getByRole("button", { name: "Adicionar pessoa" }).click();
+  await page
+    .getByRole("button", { name: "Escala mensal", exact: true })
+    .click();
+  await page.getByLabel("Mês da escala").fill("2026-11");
+
+  const remove = (person: string, day: string) =>
+    page.getByRole("button", {
+      name: "Remover " + person + " de " + day,
+      exact: true,
+    });
+  await expect(remove("Bruna", "02/11")).toBeVisible();
+  await expect(remove("Bruna", "06/11")).toBeVisible();
+  await expect(remove("Bruna", "07/11")).toHaveCount(0);
+  await expect(remove("Pessoa 0", "02/11")).toHaveCount(0);
+  await expect(remove("Pessoa 0", "03/11")).toBeVisible();
+  const saved = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("compasso-v1")!),
+  );
+  expect(saved.assignments).toEqual(data.assignments);
+});
