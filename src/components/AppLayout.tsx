@@ -68,24 +68,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
     >
       <aside
         className={
-          "flex flex-col gap-3 bg-sidebar p-5 text-white md:fixed md:inset-y-0 md:w-(--sidebar-width) md:py-8 " +
+          "flex flex-col gap-3 bg-sidebar p-5 text-white md:fixed md:inset-y-0 md:w-(--sidebar-width) md:pt-4 md:pb-8 " +
           (collapsed ? "md:px-3" : "md:px-6")
         }
       >
         <div
           className={
-            "flex items-center justify-between gap-2 " +
-            (collapsed ? "md:flex-col" : "")
+            "flex flex-col items-start gap-1 " +
+            (collapsed ? "md:items-center" : "")
           }
         >
-          <a
-            className="flex items-center gap-1 whitespace-nowrap text-[28px] font-semibold tracking-[-1.5px]"
-            href="#"
-            aria-label="Compasso"
-          >
-            <span aria-hidden="true">◷</span>
-            <span className={compactText}>compasso</span>
-          </a>
           <button
             type="button"
             aria-controls="sidebar-navigation"
@@ -93,7 +85,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             aria-label={toggleLabel}
             title={toggleLabel}
             onClick={() => setCollapsed((current) => !current)}
-            className="hidden size-8 shrink-0 place-items-center rounded-md text-blue-100 hover:bg-[#31536c] focus-visible:outline-blue-200 md:grid"
+            className={
+              "hidden size-8 shrink-0 place-items-center rounded-md text-blue-100 hover:bg-[#31536c] focus-visible:outline-blue-200 md:grid " +
+              (collapsed ? "" : "self-end")
+            }
           >
             <svg
               aria-hidden="true"
@@ -110,6 +105,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <path d={collapsed ? "m13 9 3 3-3 3" : "m16 9-3 3 3 3"} />
             </svg>
           </button>
+          <a
+            className="flex items-center gap-1 whitespace-nowrap text-[28px] font-semibold tracking-[-1.5px]"
+            href="#"
+            aria-label="Compasso"
+          >
+            <span aria-hidden="true">◷</span>
+            <span className={compactText}>compasso</span>
+          </a>
         </div>
         <p
           className={
