@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useApp } from "../../app/AppContext";
 import { range } from "../../domain/dates";
 import { validate } from "../../domain/validation";
 import { button, primary, shiftColor } from "../../components/styles";
+import { Notice } from "../../components/Notice";
 import { ScheduleCalendar } from "./ScheduleCalendar";
 import { WeeklySummary } from "./WeeklySummary";
 import { useScheduleGenerator } from "./useScheduleGenerator";
@@ -12,12 +14,23 @@ export function SchedulePage() {
     days = range(month),
     assignments = draft || data.assignments,
     people = data.people.filter((p) => p.active);
+  const [validation, setValidation] = useState<{
+    month: string;
+    assignments: typeof assignments;
+    errors: string[];
+  } | null>(null);
+  const errors =
+    validation?.month === month && validation.assignments === assignments
+      ? validation.errors
+      : [];
+
   function check() {
     const errors = validate(data, month, assignments);
+    setValidation({ month, assignments, errors });
     dispatch({
       type: "messages",
       messages: errors.length
-        ? errors
+        ? []
         : ["Escala válida: todas as regras obrigatórias foram atendidas."],
     });
   }
@@ -26,13 +39,15 @@ export function SchedulePage() {
     next[day] ??= {};
     next[day][person] = shift;
     dispatch({ type: "draft", draft: next });
-    dispatch({ type: "messages", messages: validate(data, month, next) });
+    setValidation(null);
+    dispatch({ type: "messages", messages: [] });
   }
   function accept() {
     if (!draft) return;
     const errors = validate(data, month, draft);
     if (errors.length) {
-      dispatch({ type: "messages", messages: errors });
+      setValidation({ month, assignments: draft, errors });
+      dispatch({ type: "messages", messages: [] });
       return;
     }
     dispatch({ type: "accept" });
@@ -49,8 +64,10 @@ export function SchedulePage() {
             disabled={busy || !!draft}
             value={month}
             onChange={(e) => {
-              if (/^\d{4}-\d{2}$/.test(e.target.value))
+              if (/^\d{4}-\d{2}$/.test(e.target.value)) {
+                setValidation(null);
                 dispatch({ type: "month", month: e.target.value });
+              }
             }}
           />
         </label>
@@ -115,6 +132,14 @@ export function SchedulePage() {
             Descartar revisão
           </button>
         </div>
+      )}
+      {errors.length > 0 && !busy && (
+        <details className="mb-4 rounded-md border border-amber-200 bg-amber-50">
+          <summary className="px-4 py-3 text-sm font-semibold text-amber-900">
+            Pendências na validação ({errors.length})
+          </summary>
+          <Notice messages={errors} />
+        </details>
       )}
       {!people.length || !data.shifts.length ? (
         <section className="rounded-lg border border-dashed border-line bg-white px-5 py-16 text-center">

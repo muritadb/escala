@@ -48,7 +48,7 @@ export function ScheduleCalendar({
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-[#063b59] px-5 py-5 text-[#effcfd] sm:px-7">
         <div>
           <h2 className="text-xl font-semibold">Calendário de turnos</h2>
-          <p className="capitalize text-[#c4e7eb]">
+          <p className="text-[#c4e7eb] first-letter:uppercase">
             {monthLabel.format(date(days[0]))}
           </p>
         </div>

@@ -119,8 +119,13 @@ test("ajuste manual inválido permanece somente na revisão", async () => {
   await user.selectOptions(cell, "a");
   screen.getByRole<HTMLDialogElement>("dialog").open = false;
   expect(screen.getByText("Escala em revisão")).toBeInTheDocument();
+  expect(screen.queryByText(/Pendências na validação/)).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Validar e salvar" }));
   expect(screen.getByText("Escala em revisão")).toBeInTheDocument();
+  const summary = screen.getByText(/Pendências na validação/);
+  expect(summary.closest("details")).not.toHaveAttribute("open");
+  await user.click(summary);
+  expect(summary.closest("details")).toHaveAttribute("open");
   expect(saved().assignments).toEqual({});
 });
 test("navegação pede confirmação para descartar revisão", async () => {
