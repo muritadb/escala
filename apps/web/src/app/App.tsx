@@ -3,6 +3,7 @@ import { AppLayout } from "../components/AppLayout";
 import { PeoplePage } from "../features/people/PeoplePage";
 import { ShiftsPage } from "../features/shifts/ShiftsPage";
 import { CoveragePage } from "../features/coverage/CoveragePage";
+import { SettingsPage } from "../features/settings/SettingsPage";
 import { SchedulePage } from "../features/schedule/SchedulePage";
 function Content() {
   const { state, revision, loading, busy } = useApp();
@@ -10,6 +11,7 @@ function Content() {
     pessoas: <PeoplePage />,
     turnos: <ShiftsPage />,
     cobertura: <CoveragePage />,
+    configuracoes: <SettingsPage />,
   };
   return (
     <AppLayout>

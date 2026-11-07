@@ -24,7 +24,8 @@ export interface AppData {
 export type SolveResult =
   | { status: "feasible"; assignments: Assignments }
   | { status: "infeasible" | "timeout" | "error"; errors: string[] };
-export type Tab = "escala" | "pessoas" | "turnos" | "cobertura";
+export type Tab =
+  "escala" | "pessoas" | "turnos" | "cobertura" | "configuracoes";
 export function emptyData(): AppData {
   return {
     version: 1,

@@ -1,16 +1,17 @@
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { useApp } from "../app/AppContext";
 import type { Tab } from "@compasso/domain";
-import { BackupMenu } from "./BackupMenu";
 import { Notice } from "./Notice";
 import { button } from "./styles";
-const pages: {
+interface Page {
   id: Tab;
-  icon: string;
+  icon: ReactNode;
   name: string;
   title: string;
   description: string;
-}[] = [
+}
+
+const pages: Page[] = [
   {
     id: "escala",
     icon: "▦",
@@ -41,6 +42,28 @@ const pages: {
     description: "Escolha os dias de funcionamento e a cobertura mínima.",
   },
 ];
+const settingsPage: Page = {
+  id: "configuracoes",
+  name: "Configurações",
+  title: "Configurações",
+  description: "Gerencie os backups do Compasso.",
+  icon: (
+    <svg
+      aria-hidden="true"
+      className="size-5 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 3h4l.6 2.5 1.5.9 2.5-.8 2 3.5-1.9 1.7v2l1.9 1.7-2 3.5-2.5-.8-1.5.9-.6 2.5h-4l-.6-2.5-1.5-.9-2.5.8-2-3.5 1.9-1.7v-2L3.4 9.1l2-3.5 2.5.8 1.5-.9L10 3Z" />
+      <circle cx="12" cy="11.8" r="3" />
+    </svg>
+  ),
+};
+
 const compactSidebarQuery = "(768px <= width < 1280px)";
 
 function subscribeToSidebarSize(onChange: () => void) {
@@ -64,7 +87,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
       refresh,
       importBackup,
     } = useApp(),
-    page = pages.find((p) => p.id === state.tab)!;
+    page =
+      state.tab === settingsPage.id
+        ? settingsPage
+        : pages.find((p) => p.id === state.tab)!;
   const compactByDefault = useSyncExternalStore(
     subscribeToSidebarSize,
     isCompactSidebarSize,
@@ -78,13 +104,40 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   async function navigate(tab: Tab) {
     if (busy || tab === state.tab) return;
+    const keepDraft =
+      tab === "configuracoes" ||
+      (state.tab === "configuracoes" && tab === "escala");
     if (
       state.draft &&
+      !keepDraft &&
       !(await confirm("Descartar a revisão para alterar as configurações?"))
     )
       return;
-    dispatch({ type: "tab", tab });
+    dispatch({ type: "tab", tab, keepDraft });
   }
+  function navigationButton(p: Page) {
+    return (
+      <button
+        type="button"
+        key={p.id}
+        disabled={busy || revision === null}
+        title={p.name}
+        aria-current={state.tab === p.id ? "page" : undefined}
+        onClick={() => void navigate(p.id)}
+        className={
+          "flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-3 text-left text-sm hover:bg-[#31536c] focus-visible:outline-blue-200 " +
+          (collapsed ? "md:justify-center md:px-0 md:text-lg " : "") +
+          (state.tab === p.id ? "bg-[#31536c] text-white" : "text-blue-100/80")
+        }
+      >
+        <span aria-hidden="true" className="shrink-0">
+          {p.icon}
+        </span>
+        <span className={compactText}>{p.name}</span>
+      </button>
+    );
+  }
+
   return (
     <div
       className={
@@ -154,25 +207,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           aria-label="Navegação principal"
           className="flex gap-2 overflow-x-auto md:grid md:overflow-visible"
         >
-          {pages.map((p) => (
-            <button
-              key={p.id}
-              disabled={busy || revision === null}
-              title={p.name}
-              aria-current={state.tab === p.id ? "page" : undefined}
-              onClick={() => void navigate(p.id)}
-              className={
-                "flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-3 text-left text-sm hover:bg-[#31536c] focus-visible:outline-blue-200 " +
-                (collapsed ? "md:justify-center md:px-0 md:text-lg " : "") +
-                (state.tab === p.id
-                  ? "bg-[#31536c] text-white"
-                  : "text-blue-100/80")
-              }
-            >
-              <span aria-hidden="true">{p.icon}</span>
-              <span className={compactText}>{p.name}</span>
-            </button>
-          ))}
+          {pages.map(navigationButton)}
         </nav>
         <div
           className={
@@ -203,7 +238,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             Sem login · dados locais
           </small>
         </div>
-        <BackupMenu collapsed={collapsed} />
+        <nav aria-label="Configurações do aplicativo" className="grid">
+          {navigationButton(settingsPage)}
+        </nav>
       </aside>
       <main className="w-full p-4 md:ml-(--sidebar-width) md:w-[calc(100%-var(--sidebar-width))] md:p-7 xl:p-10">
         <header className="mb-8 flex flex-col justify-between gap-5 xl:flex-row xl:items-center">
@@ -216,9 +253,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </h1>
             <p className="text-muted">{page.description}</p>
           </div>
-          <span className="w-fit whitespace-nowrap rounded-full bg-blue-100/60 px-4 py-2.5 text-xs">
-            5 dias de trabalho · 2 de folga
-          </span>
+          {state.tab !== "configuracoes" && (
+            <span className="w-fit whitespace-nowrap rounded-full bg-blue-100/60 px-4 py-2.5 text-xs">
+              5 dias de trabalho · 2 de folga
+            </span>
+          )}
         </header>
         <Notice
           messages={state.storageError ? [state.storageError] : []}

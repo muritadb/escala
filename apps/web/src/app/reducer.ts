@@ -11,7 +11,7 @@ export interface AppState {
 export type Action =
   | { type: "data"; data: AppData }
   | { type: "draft"; draft: Assignments | null }
-  | { type: "tab"; tab: Tab }
+  | { type: "tab"; tab: Tab; keepDraft?: boolean }
   | { type: "month"; month: string }
   | { type: "messages"; messages: string[] }
   | { type: "storageError"; error: string };
@@ -32,7 +32,12 @@ export function reducer(state: AppState, action: Action): AppState {
     case "draft":
       return { ...state, draft: action.draft };
     case "tab":
-      return { ...state, tab: action.tab, draft: null, messages: [] };
+      return {
+        ...state,
+        tab: action.tab,
+        draft: action.keepDraft ? state.draft : null,
+        messages: [],
+      };
     case "month":
       return { ...state, month: action.month, messages: [] };
     case "messages":

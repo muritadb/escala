@@ -123,6 +123,16 @@ test("produção: dados legados, quatro telas, cores e geração no worker", asy
   await editor.getByRole("button", { name: "Fechar" }).click();
   await expect(day).toBeFocused();
   await expect(page.getByText("Escala em revisão")).toBeVisible();
+  await page
+    .getByRole("button", { name: "Configurações", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Configurações", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Escala mensal", exact: true })
+    .click();
+  await expect(page.getByText("Escala em revisão")).toBeVisible();
   await page.getByRole("button", { name: "Descartar revisão" }).click();
   for (const [name, title] of [
     ["Pessoas", "Quem faz acontecer."],
@@ -324,11 +334,14 @@ test("recolhe a barra no desktop e libera espaço para o calendário", async ({
   const exportBackup = page.getByRole("button", { name: "Exportar backup" });
   await expect(exportBackup).toBeHidden();
   await settings.press("Enter");
-  await expect(exportBackup).toBeVisible();
-  await expect(settings).toHaveAttribute("aria-expanded", "true");
-  await settings.press("Escape");
-  await expect(exportBackup).toBeHidden();
-  await expect(settings).toBeFocused();
+  await expect(
+    main.getByRole("heading", { name: "Configurações", exact: true }),
+  ).toBeVisible();
+  await expect(main.getByRole("heading", { name: "Backups" })).toBeVisible();
+  await expect(
+    main.getByRole("button", { name: "Exportar backup" }),
+  ).toBeVisible();
+  await expect(settings).toHaveAttribute("aria-current", "page");
   await page.screenshot({ path: "test-results/barra-recolhida.png" });
 
   await page.getByRole("button", { name: "Pessoas", exact: true }).click();
@@ -347,6 +360,16 @@ test("recolhe a barra no desktop e libera espaço para o calendário", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(toggle).toBeHidden();
   await expect(main).toHaveCSS("margin-left", "0px");
+  await settings.click();
+  await expect(
+    main.getByRole("button", { name: "Importar backup" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: "test-results/configuracoes-celular.png" });
 });
 
 test("importa um backup de 50 funcionários e valida a escala após recarregar", async ({
@@ -386,7 +409,9 @@ test("importa um backup de 50 funcionários e valida a escala após recarregar",
     page.getByText("Backup importado. Valide as escalas antes de utilizá-las."),
   ).toBeVisible();
   expect((await snapshot(request)).data).toEqual(data);
-  await settings.click();
+  await expect(
+    page.getByRole("heading", { name: "Configurações", exact: true }),
+  ).toBeVisible();
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     page.getByRole("button", { name: "Exportar backup" }).click(),
