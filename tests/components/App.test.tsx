@@ -116,7 +116,7 @@ test("ajuste manual inválido permanece somente na revisão", async () => {
   const user = userEvent.setup();
   render(<App />);
   const cell = await openFirstDay(user);
-  await user.selectOptions(cell, "a");
+  await user.selectOptions(cell, (cell as HTMLSelectElement).value ? "" : "a");
   screen.getByRole<HTMLDialogElement>("dialog").open = false;
   expect(screen.getByText("Escala em revisão")).toBeInTheDocument();
   expect(screen.queryByText(/Pendências na validação/)).not.toBeInTheDocument();
@@ -132,7 +132,8 @@ test("navegação pede confirmação para descartar revisão", async () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(fixture()));
   const user = userEvent.setup();
   render(<App />);
-  await user.selectOptions(await openFirstDay(user), "a");
+  const cell = await openFirstDay(user);
+  await user.selectOptions(cell, (cell as HTMLSelectElement).value ? "" : "a");
   screen.getByRole<HTMLDialogElement>("dialog").open = false;
   await user.click(screen.getByRole("button", { name: "Turnos" }));
   await user.click(

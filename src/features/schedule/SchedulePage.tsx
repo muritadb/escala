@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useApp } from "../../app/AppContext";
 import { range } from "../../domain/dates";
+import { weekdayDefaults } from "../../domain/weekdayDefaults";
 import { validate } from "../../domain/validation";
 import { button, primary, shiftColor } from "../../components/styles";
 import { Notice } from "../../components/Notice";
@@ -12,8 +13,10 @@ export function SchedulePage() {
     { data, draft, month } = state,
     { generate, cancel, busy } = useScheduleGenerator(),
     days = range(month),
-    assignments = draft || data.assignments,
     people = data.people.filter((p) => p.active);
+  const initial = useMemo(() => weekdayDefaults(data, month), [data, month]);
+  const assignments = draft ?? initial;
+  const showInitial = !draft && initial !== data.assignments;
   const [validation, setValidation] = useState<{
     month: string;
     assignments: typeof assignments;
@@ -122,6 +125,20 @@ export function SchedulePage() {
           Uma pessoa ocupa no máximo um turno por dia.
         </p>
       </div>
+      {showInitial && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-white px-4 py-3">
+          <p className="text-sm text-muted">
+            Sugestão inicial de segunda a sexta, conforme a disponibilidade.
+          </p>
+          <button
+            className={button}
+            disabled={busy}
+            onClick={() => dispatch({ type: "draft", draft: initial })}
+          >
+            Revisar escala inicial
+          </button>
+        </div>
+      )}
       {draft && (
         <div className="mb-6 flex flex-wrap items-center gap-4 border border-blue-200 bg-blue-50 p-5">
           <strong>Escala em revisão</strong>
