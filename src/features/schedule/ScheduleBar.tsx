@@ -63,10 +63,18 @@ export function ScheduleBar({
         onPointerDown={(event) => onGrab(event, day, edge)}
         onKeyDown={(event) => onResizeKey(event, day, edge)}
       >
-        <span
+        <svg
           aria-hidden="true"
-          className="h-2.5 w-1.5 border-x border-current"
-        />
+          className="pointer-events-none size-4"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M2 8h12M5 5 2 8l3 3m6-6 3 3-3 3" />
+        </svg>
       </button>
     );
   }
