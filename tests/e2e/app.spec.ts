@@ -101,3 +101,76 @@ test("celular: quatro telas sem transbordamento da página", async ({
     });
   }
 });
+
+test("ajusta faixas entre semanas, preserva outro turno e remove um dia isolado", async ({
+  page,
+}) => {
+  const data = fixture(1);
+  data.shifts.push({ id: "b", name: "Tarde", start: "16:00", end: "22:00" });
+  data.assignments = {
+    "2026-11-04": { p0: "a" },
+    "2026-11-05": { p0: "a" },
+    "2026-11-06": { p0: "a" },
+    "2026-11-09": { p0: "b" },
+  };
+  await page.addInitScript(
+    (data) => localStorage.setItem("compasso-v1", JSON.stringify(data)),
+    data,
+  );
+  await page.goto("/");
+  await page.getByLabel("Mês da escala").fill("2026-11");
+
+  async function resize(end: string, target: string) {
+    const handle = page.getByRole("button", {
+      name: "Ajustar fim de Pessoa 0 em " + end,
+      exact: true,
+    });
+    const date = page.locator('time[datetime="' + target + '"]');
+    await handle.scrollIntoViewIfNeeded();
+    await date.scrollIntoViewIfNeeded();
+    const from = (await handle.boundingBox())!;
+    const to = (await date.boundingBox())!;
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+      steps: 8,
+    });
+    await page.mouse.up();
+  }
+
+  const remove = (day: string) =>
+    page.getByRole("button", {
+      name: "Remover Pessoa 0 de " + day,
+      exact: true,
+    });
+
+  await resize("06/11", "2026-11-10");
+  await expect(remove("07/11")).toBeVisible();
+  await expect(remove("08/11")).toBeVisible();
+  await expect(
+    page.getByTitle("Pessoa 0 · Tarde", { exact: true }),
+  ).toBeVisible();
+  await expect(remove("10/11")).toHaveCount(0);
+
+  await remove("06/11").click();
+  await expect(remove("06/11")).toHaveCount(0);
+  await expect(remove("05/11")).toBeVisible();
+  await expect(remove("07/11")).toBeVisible();
+
+  await resize("08/11", "2026-11-07");
+  await expect(remove("08/11")).toHaveCount(0);
+  await expect(remove("07/11")).toBeVisible();
+
+  await page
+    .getByRole("button", {
+      name: "Ajustar início de Pessoa 0 em 04/11",
+      exact: true,
+    })
+    .press("ArrowLeft");
+  await expect(remove("03/11")).toBeVisible();
+
+  const saved = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("compasso-v1")!),
+  );
+  expect(saved.assignments).toEqual(data.assignments);
+});

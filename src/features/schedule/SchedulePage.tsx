@@ -34,10 +34,12 @@ export function SchedulePage() {
         : ["Escala válida: todas as regras obrigatórias foram atendidas."],
     });
   }
-  function edit(day: string, person: string, shift: string) {
+  function editDays(dates: string[], person: string, shift: string) {
     const next = structuredClone(assignments);
-    next[day] ??= {};
-    next[day][person] = shift;
+    for (const day of dates) {
+      next[day] ??= {};
+      next[day][person] = shift;
+    }
     dispatch({ type: "draft", draft: next });
     setValidation(null);
     dispatch({ type: "messages", messages: [] });
@@ -53,7 +55,14 @@ export function SchedulePage() {
     dispatch({ type: "accept" });
     dispatch({ type: "messages", messages: ["Escala salva."] });
   }
-  const grid = { data, assignments, days, busy, onEdit: edit };
+  const grid = {
+    data,
+    assignments,
+    days,
+    busy,
+    onEdit: (day: string, person: string, shift: string) =>
+      editDays([day], person, shift),
+  };
   return (
     <>
       <div className="flex flex-col justify-between gap-4 border-t border-line pt-6 xl:flex-row xl:items-end">
@@ -174,6 +183,7 @@ export function SchedulePage() {
             {...grid}
             key={month}
             month={month}
+            onEditDays={editDays}
             days={days.filter((day) => day.startsWith(month))}
           />
           <WeeklySummary {...grid} month={month} />
