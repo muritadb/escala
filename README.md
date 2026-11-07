@@ -41,7 +41,7 @@ Instale o Chromium do Playwright com npx playwright install chromium antes de ro
 
 A instalação é individual e sem login. O banco padrão fica em **apps/api/data/compasso.sqlite**. Para usar outro arquivo, defina **COMPASSO_DB_PATH** com um caminho absoluto antes de iniciar o app. O banco é criado na primeira execução.
 
-Na primeira abertura com o banco vazio, o Compasso oferece **Importar dados deste navegador** quando encontra dados válidos na chave antiga compasso-v1. Confirme para copiá-los para o SQLite. A cópia antiga continua no navegador. Se os dados estiverem em outro navegador ou origem, importe um backup JSON pela barra lateral.
+Na primeira abertura com o banco vazio, o Compasso oferece **Importar dados deste navegador** quando encontra dados válidos na chave antiga compasso-v1. Confirme para copiá-los para o SQLite. A cópia antiga continua no navegador. Se os dados estiverem em outro navegador ou origem, abra **Configurações** na barra lateral e selecione **Importar backup**.
 
 Os backups continuam no formato JSON versão 1. **Exportar backup** baixa os dados salvos no banco. **Importar backup** valida o arquivo e pede confirmação para substituir os dados do banco. A revisão aberta permanece na memória da página até ser validada e salva.
 

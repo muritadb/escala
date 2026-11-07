@@ -1,8 +1,7 @@
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { useApp } from "../app/AppContext";
 import type { Tab } from "@compasso/domain";
-import { api } from "../infrastructure/api";
-import { downloadBackup, readBackup } from "../infrastructure/backup";
+import { BackupMenu } from "./BackupMenu";
 import { Notice } from "./Notice";
 import { button } from "./styles";
 const pages: {
@@ -64,7 +63,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
       legacy,
       refresh,
       importBackup,
-      reportError,
     } = useApp(),
     page = pages.find((p) => p.id === state.tab)!;
   const compactByDefault = useSyncExternalStore(
@@ -205,79 +203,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             Sem login · dados locais
           </small>
         </div>
-        <button
-          className={button + (collapsed ? " md:p-2 md:text-lg" : "")}
-          title="Exportar backup"
-          disabled={revision === null}
-          onClick={async () => {
-            try {
-              downloadBackup((await api.state()).data);
-            } catch (error) {
-              reportError(error);
-            }
-          }}
-        >
-          <span className={compactText}>Exportar backup</span>
-          {collapsed && (
-            <span aria-hidden="true" className="hidden md:inline">
-              ⤓
-            </span>
-          )}
-        </button>
-        <label
-          className={
-            "rounded-md border border-line bg-white p-3 text-center text-ink " +
-            (collapsed
-              ? "md:cursor-pointer md:p-2 md:text-lg md:focus-within:outline-2 md:focus-within:outline-offset-2 md:focus-within:outline-blue-200"
-              : "")
-          }
-          title="Importar backup"
-        >
-          <span className={compactText}>Importar backup</span>
-          {collapsed && (
-            <span aria-hidden="true" className="hidden md:inline">
-              ⤒
-            </span>
-          )}
-          <input
-            aria-label="Importar backup"
-            type="file"
-            disabled={busy || revision === null}
-            accept=".json,application/json"
-            className={"max-w-full text-xs " + compactText}
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (!file) return;
-              try {
-                const data = await readBackup(file);
-                if (
-                  !(await confirm(
-                    "Substituir todos os dados locais pelo backup selecionado? A revisão atual também será descartada.",
-                  ))
-                )
-                  return;
-                if (!(await importBackup(data, "replace"))) return;
-                dispatch({
-                  type: "messages",
-                  messages: [
-                    "Backup importado. Valide as escalas antes de utilizá-las.",
-                  ],
-                });
-              } catch (error) {
-                dispatch({
-                  type: "messages",
-                  messages: [
-                    "Importação recusada: " +
-                      (error instanceof Error
-                        ? error.message
-                        : "Arquivo inválido"),
-                  ],
-                });
-              }
-            }}
-          />
-        </label>
+        <BackupMenu collapsed={collapsed} />
       </aside>
       <main className="w-full p-4 md:ml-(--sidebar-width) md:w-[calc(100%-var(--sidebar-width))] md:p-7 xl:p-10">
         <header className="mb-8 flex flex-col justify-between gap-5 xl:flex-row xl:items-center">

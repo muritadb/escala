@@ -320,9 +320,15 @@ test("recolhe a barra no desktop e libera espaço para o calendário", async ({
   await expect(toggle).toHaveAccessibleName("Expandir barra lateral");
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await expect(main).toHaveCSS("margin-left", "72px");
-  await expect(
-    page.getByRole("button", { name: "Exportar backup" }),
-  ).toBeVisible();
+  const settings = page.getByRole("button", { name: "Configurações" });
+  const exportBackup = page.getByRole("button", { name: "Exportar backup" });
+  await expect(exportBackup).toBeHidden();
+  await settings.press("Enter");
+  await expect(exportBackup).toBeVisible();
+  await expect(settings).toHaveAttribute("aria-expanded", "true");
+  await settings.press("Escape");
+  await expect(exportBackup).toBeHidden();
+  await expect(settings).toBeFocused();
   await page.screenshot({ path: "test-results/barra-recolhida.png" });
 
   await page.getByRole("button", { name: "Pessoas", exact: true }).click();
@@ -361,7 +367,13 @@ test("importa um backup de 50 funcionários e valida a escala após recarregar",
     ]),
   );
   await page.goto("/");
-  await page.getByLabel("Importar backup").setInputFiles({
+  const settings = page.getByRole("button", { name: "Configurações" });
+  await settings.click();
+  const [chooser] = await Promise.all([
+    page.waitForEvent("filechooser"),
+    page.getByRole("button", { name: "Importar backup" }).click(),
+  ]);
+  await chooser.setFiles({
     name: "compasso-50-funcionarios.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(data)),
@@ -374,6 +386,7 @@ test("importa um backup de 50 funcionários e valida a escala após recarregar",
     page.getByText("Backup importado. Valide as escalas antes de utilizá-las."),
   ).toBeVisible();
   expect((await snapshot(request)).data).toEqual(data);
+  await settings.click();
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     page.getByRole("button", { name: "Exportar backup" }).click(),
