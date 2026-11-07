@@ -5,3 +5,9 @@
 /test-results/
 /playwright-report/
 *.tsbuildinfo
+
+**/dist/
+**/node_modules/
+**/test-results/
+**/playwright-report/
+/apps/api/data/

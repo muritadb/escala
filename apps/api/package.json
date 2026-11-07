@@ -1,0 +1,16 @@
+{
+  "name": "@compasso/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js",
+    "test": "npm run build && node --test"
+  },
+  "dependencies": {
+    "@compasso/domain": "*",
+    "@fastify/static": "^8",
+    "fastify": "^5"
+  }
+}

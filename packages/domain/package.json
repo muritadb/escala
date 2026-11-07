@@ -1,0 +1,19 @@
+{
+  "name": "@compasso/domain",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./solver": {
+      "types": "./dist/solver.d.ts",
+      "default": "./dist/solver.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  }
+}
