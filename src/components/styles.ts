@@ -14,3 +14,7 @@ export const shiftColor = (index: number) =>
     ((index % shiftColors.length) + shiftColors.length) % shiftColors.length
   ];
 export const heading = "mb-3 mt-6 text-xl font-semibold";
+
+export function personColor(index: number) {
+  return "hsl(" + ((208 + index * 137.508) % 360) + " 68% 85%)";
+}

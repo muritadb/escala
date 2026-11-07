@@ -3,7 +3,7 @@ import { useApp } from "../../app/AppContext";
 import { range } from "../../domain/dates";
 import { weekdayDefaults } from "../../domain/weekdayDefaults";
 import { validate } from "../../domain/validation";
-import { button, primary, shiftColor } from "../../components/styles";
+import { button, primary, personColor } from "../../components/styles";
 import { Notice } from "../../components/Notice";
 import { ScheduleCalendar } from "./ScheduleCalendar";
 import { WeeklySummary } from "./WeeklySummary";
@@ -188,12 +188,18 @@ export function SchedulePage() {
       ) : (
         <>
           <div className="mb-4 flex flex-wrap gap-6 text-xs">
-            {data.shifts.map((t, i) => (
-              <span key={t.id} className="flex items-center gap-2">
-                <i className={"size-3 rounded " + shiftColor(i)} />
-                {t.name}
-              </span>
-            ))}
+            {data.people.map(
+              (person, index) =>
+                person.active && (
+                  <span key={person.id} className="flex items-center gap-2">
+                    <i
+                      className="size-3 rounded border border-ink/25"
+                      style={{ backgroundColor: personColor(index) }}
+                    />
+                    {person.name}
+                  </span>
+                ),
+            )}
             <span>Dias sem faixa indicam folga.</span>
           </div>
           <ScheduleCalendar

@@ -1,5 +1,5 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { button } from "../../components/styles";
+import { button, personColor } from "../../components/styles";
 import { add, date, dow, weekdays } from "../../domain/dates";
 import { need } from "../../domain/rules";
 import { AssignmentSelect, type GridProps } from "./ScheduleGrid";
@@ -34,6 +34,9 @@ export function ScheduleCalendar({
   month: string;
   onEditDays: (days: string[], person: string, shift: string) => void;
 }) {
+  const colors = new Map(
+    data.people.map((person, index) => [person.id, personColor(index)]),
+  );
   const people = data.people.filter((person) => person.active);
   const [selectedDay, setSelectedDay] = useState(days[0]);
   const editor = useRef<HTMLDialogElement>(null);
@@ -294,7 +297,7 @@ export function ScheduleCalendar({
                         days={week.slice(start, end)}
                         person={person.name}
                         shift={shift.name}
-                        shiftIndex={shiftIndex}
+                        color={colors.get(person.id)!}
                         column={start + 1}
                         row={lane + 2}
                         busy={busy}

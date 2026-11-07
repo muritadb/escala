@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { fixture } from "../fixtures";
+import { range } from "../../src/domain/dates";
 test("produção: dados legados, quatro telas, cores e geração no worker", async ({
   page,
 }) => {
@@ -11,12 +12,37 @@ test("produção: dados legados, quatro telas, cores e geração no worker", asy
   }, fixture());
   await page.goto("/");
   await page.getByLabel("Mês da escala").fill("2026-11");
+  const initial = page.getByRole("button", { name: "Revisar escala inicial" });
+  await expect(initial).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Remover Pessoa 0 de 02/11" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Remover Pessoa 1 de 06/11" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Remover Pessoa 0 de 07/11" }),
+  ).toHaveCount(0);
+  const colorOf = async (index: number) => {
+    const bars = page.getByTitle("Pessoa " + index + " · Manhã", {
+      exact: true,
+    });
+    const color = await bars
+      .first()
+      .evaluate((bar) => getComputedStyle(bar).backgroundColor);
+    await expect(bars.nth(1)).toHaveCSS("background-color", color);
+    return color;
+  };
+  const firstColor = await colorOf(0);
+  expect(await colorOf(1)).not.toBe(firstColor);
+  expect(
+    await page.evaluate(
+      () => JSON.parse(localStorage.getItem("compasso-v1")!).assignments,
+    ),
+  ).toEqual({});
   await page.getByRole("button", { name: "Gerar escala", exact: true }).click();
   await expect(page.getByText("Escala em revisão")).toBeVisible();
-  await expect(page.locator(".bg-shift-blue[title]").first()).toHaveCSS(
-    "background-color",
-    "rgb(210, 232, 253)",
-  );
+  expect(await colorOf(0)).toBe(firstColor);
   await page.getByRole("button", { name: "Validar e salvar" }).click();
   await expect(page.getByText("Escala salva.", { exact: true })).toBeVisible();
   const saved = await page.evaluate(() => localStorage.getItem("compasso-v1"));
@@ -108,6 +134,7 @@ test("ajusta faixas entre semanas, preserva outro turno e remove um dia isolado"
   const data = fixture(1);
   data.shifts.push({ id: "b", name: "Tarde", start: "16:00", end: "22:00" });
   data.assignments = {
+    ...Object.fromEntries(range("2026-11").map((day) => [day, {}])),
     "2026-11-04": { p0: "a" },
     "2026-11-05": { p0: "a" },
     "2026-11-06": { p0: "a" },

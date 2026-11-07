@@ -1,5 +1,4 @@
 import type { KeyboardEvent, PointerEvent } from "react";
-import { shiftColor } from "../../components/styles";
 import { label } from "../../domain/dates";
 import type { ResizeRange } from "./scheduleResize";
 
@@ -7,7 +6,7 @@ interface ScheduleBarProps {
   days: string[];
   person: string;
   shift: string;
-  shiftIndex: number;
+  color: string;
   column: number;
   row: number;
   busy: boolean;
@@ -30,7 +29,7 @@ export function ScheduleBar({
   days,
   person,
   shift,
-  shiftIndex,
+  color,
   column,
   row,
   busy,
@@ -81,11 +80,12 @@ export function ScheduleBar({
 
   return (
     <div
-      className={
-        "relative isolate mx-1 rounded-full border border-ink/25 " +
-        shiftColor(shiftIndex)
-      }
-      style={{ gridColumn: column + " / span " + days.length, gridRow: row }}
+      className="relative isolate mx-1 rounded-full border border-ink/25"
+      style={{
+        gridColumn: column + " / span " + days.length,
+        gridRow: row,
+        backgroundColor: color,
+      }}
       title={text}
     >
       <div
